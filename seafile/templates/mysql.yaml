@@ -1,0 +1,106 @@
+{{ if .Capabilities.APIVersions.Has "apps/v1/Deployment" }}
+apiVersion: apps/v1
+{{ else }}
+apiVersion: extensions/v1beta1
+{{ end }}
+kind: Deployment
+metadata:
+  name: {{ include "seafile.fullname" . }}-mysql
+  labels:
+    {{- include "seafile.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "seafile.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        {{- include "seafile.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+    spec:
+
+      volumes:
+
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: {{ include "mysql.claimName" . }}
+
+      containers:
+
+        - name: mysql
+          image: {{ .Values.mysql.image }}
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/mysql
+          env:
+            {{- if .Values.timezone }}
+            - name: TZ
+              value: {{ .Values.timezone }}
+            {{- end }}
+          {{- toYaml .Values.mysql.environment | nindent 12 }}
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+          {{- with .Values.mysql.resources }}
+          resources:
+          {{- .| toYaml | nindent 10 }}
+          {{- end }}
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "mysqladmin ping -u root -p${MYSQL_ROOT_PASSWORD}"
+            periodSeconds: 10
+            failureThreshold: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "mysqladmin ping -u root -p${MYSQL_ROOT_PASSWORD}"
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+  strategy:
+    # This is a single-node mysql instance, so we need to shut down the old instance before starting a new
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "seafile.fullname" . }}-mysql
+  labels:
+    app: {{ include "seafile.fullname" . }}
+    app.kubernetes.io/component: database
+spec:
+  selector:
+    {{- include "seafile.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+  ports:
+  - name: mysql
+    port: 3306
+    protocol: TCP

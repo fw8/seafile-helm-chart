@@ -1,0 +1,48 @@
+{{- if not .Values.seafile.persistence.existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "seafile.claimName" . }}
+{{- if .Values.seafile.persistence.annotations }}
+  annotations:
+{{ toYaml .Values.seafile.persistence.annotations | indent 4 }}
+{{- end }}
+spec:
+  accessModes:
+    - {{ .Values.seafile.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.seafile.persistence.size }}
+  {{- if .Values.seafile.persistence.storageClass }}
+  {{- if (eq "-" .Values.seafile.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.seafile.persistence.storageClass }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+
+---
+{{- if not .Values.mysql.persistence.existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "mysql.claimName" . }}
+{{- if .Values.mysql.persistence.annotations }}
+  annotations:
+{{ toYaml .Values.mysql.persistence.annotations | indent 4 }}
+{{- end }}
+spec:
+  accessModes:
+    - {{ .Values.mysql.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.mysql.persistence.size }}
+  {{- if .Values.mysql.persistence.storageClass }}
+  {{- if (eq "-" .Values.mysql.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.mysql.persistence.storageClass }}
+  {{- end }}
+  {{- end }}
+{{- end }}

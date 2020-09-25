@@ -1,0 +1,71 @@
+# Default values for seafile.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# initial secrets...
+admin:
+  email: admin@test.de
+  password: G3HEiW
+
+# timezone to use:
+timezone: "Etc/UTC"
+
+seafile:
+  image:
+    repository: seafileltd/seafile-mc
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  volumeClaimName: seafile-data
+  resources: {}
+  persistence:
+    size: 100Gi
+    accessMode: ReadWriteOnce
+    #annotations:
+    #  "helm.sh/resource-policy": keep
+    #hostPath: /path/on/the/host
+    #existingClaim: name-of-existing.claim
+    #storageClass: "-"
+    #claimNameOverride: my-claim-name
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # To run garbage collection, the webserver has to be stopped!
+  # -> probe_enabled: false
+
+service:
+  type: ClusterIP
+  port: 80
+
+# certmanager settings
+certmanager:
+  issuerType: ClusterIssuer
+  issuerName: letsencrypt
+
+# ingress settings
+ingress:
+  enabled: true
+  # tls: true
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx / traefik
+    # kubernetes.io/tls-acme: "true"
+    # ingress.kubernetes.io/ssl-redirect: "true"
+  host: seafile.local
+
+mysql:
+  image: mariadb:10.4
+  environment:
+    - name: MYSQL_ROOT_PASSWORD
+      value: "db_dev"  # Requested, set the root's password of MySQL service.
+    - name: MYSQL_LOG_CONSOLE
+      value: "true"
+  persistence:
+    size: 100Gi
+    accessMode: ReadWriteOnce
+
+memcached:
+  image: memcached:1.5.6
