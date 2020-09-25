@@ -49,6 +49,12 @@ spec:
           env:
             - name: SEAFILE_SERVER_HOSTNAME
               value: {{ .Values.ingress.host }}
+            - name: SEAFILE_SERVER_SCHEME
+              {{ if .Values.ingress.tls }}
+              value: https
+              {{ else }}
+              value: http
+              {{ end }}
             - name: SEAFILE_SERVER_LETSENCRYPT
               value: "false"
             - name: SEAFILE_ADMIN_EMAIL
