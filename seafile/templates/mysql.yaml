@@ -16,6 +16,10 @@ spec:
       app.kubernetes.io/component: database
   template:
     metadata:
+      {{- with .Values.mysql.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
       labels:
         {{- include "seafile.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: database
@@ -67,15 +71,15 @@ spec:
             periodSeconds: 10
             failureThreshold: 3
             timeoutSeconds: 5
-      {{- with .Values.nodeSelector }}
+      {{- with .Values.mysql.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.mysql.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with .Values.mysql.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
